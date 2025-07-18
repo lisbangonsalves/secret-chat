@@ -1,16 +1,16 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import bcrypt from 'bcryptjs'
 
+// Get users from environment variables
 const users = [
   { 
     username: process.env.USER1_USERNAME!, 
-    passwordHash: process.env.USER1_PASSWORD_HASH!, 
+    password: process.env.USER1_PASSWORD!, 
     name: process.env.USER1_NAME! 
   },
   { 
     username: process.env.USER2_USERNAME!, 
-    passwordHash: process.env.USER2_PASSWORD_HASH!, 
+    password: process.env.USER2_PASSWORD!, 
     name: process.env.USER2_NAME! 
   }
 ]
@@ -28,10 +28,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.username || !credentials?.password) return null
         
         const user = users.find(u => u.username === credentials.username)
-        if (!user) return null
-        
-        const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash)
-        if (!isValidPassword) return null
+        if (!user || user.password !== credentials.password) return null
         
         return {
           id: user.username,
