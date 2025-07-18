@@ -12,12 +12,14 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const router = useRouter()
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - with immediate hard redirect
   useEffect(() => {
     if (status === 'authenticated') {
-      router.push('/chat')
+      console.log('User is authenticated, redirecting...')
+      // Use hard redirect instead of router.push
+      window.location.href = '/chat'
     }
-  }, [status, router])
+  }, [status])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,21 +33,14 @@ export default function LoginPage() {
         redirect: false
       })
 
-      console.log('SignIn result:', result) // Debug log
+      console.log('SignIn result:', result)
 
       if (result?.error) {
         setError('Invalid credentials')
       } else if (result?.ok) {
-        // Multiple redirect approaches for reliability
-        router.push('/chat')
-        router.refresh()
-        
-        // Fallback: Force redirect after a short delay
-        setTimeout(() => {
-          if (window.location.pathname !== '/chat') {
-            window.location.href = '/chat'
-          }
-        }, 1000)
+        // Don't rely on router.push, use hard redirect immediately
+        console.log('Login successful, redirecting...')
+        window.location.href = '/chat'
       }
     } catch (err) {
       console.error('Login error:', err)
@@ -64,13 +59,9 @@ export default function LoginPage() {
     )
   }
 
-  // Show redirecting message if authenticated
+  // Don't show anything if authenticated (redirect will happen)
   if (status === 'authenticated') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Redirecting to chat...</div>
-      </div>
-    )
+    return null
   }
 
   return (
