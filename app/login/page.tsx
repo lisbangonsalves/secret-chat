@@ -1,15 +1,23 @@
 'use client'
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { MessageCircle, Lock, User } from 'lucide-react'
 
 export default function LoginPage() {
+  const { data: session, status } = useSession()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/chat')
+    }
+  }, [status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,16 +31,46 @@ export default function LoginPage() {
         redirect: false
       })
 
+      console.log('SignIn result:', result) // Debug log
+
       if (result?.error) {
         setError('Invalid credentials')
-      } else {
+      } else if (result?.ok) {
+        // Multiple redirect approaches for reliability
         router.push('/chat')
+        router.refresh()
+        
+        // Fallback: Force redirect after a short delay
+        setTimeout(() => {
+          if (window.location.pathname !== '/chat') {
+            window.location.href = '/chat'
+          }
+        }, 1000)
       }
     } catch (err) {
+      console.error('Login error:', err)
       setError('An error occurred')
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show loading while checking authentication status
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
+  }
+
+  // Show redirecting message if authenticated
+  if (status === 'authenticated') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Redirecting to chat...</div>
+      </div>
+    )
   }
 
   return (
